@@ -21,6 +21,8 @@ urlpatterns = [
     path('', include('cartApp.urls')),
     #orders
     path('', include('ordersApp.urls')),
+    #account (auth)
+    path('api/user/', include('accountApp.urls')),
     #payment
     path('',include('paymentsApp.urls')),
 ]

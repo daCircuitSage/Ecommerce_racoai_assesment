@@ -62,7 +62,7 @@ class StripePaymentStrategy(PaymentStrategy):
             order.status = order.Status.PAID
             order.save()
 
-            for item in order.orderitems.all():
+            for item in order.orderitems.select_related('product').all():
 
                 product = item.product
 

@@ -20,6 +20,6 @@ class CategoryListView(ListAPIView):
 
 
 class CategoryDetailView(RetrieveAPIView):
-    queryset = Category.objects.all()
+    queryset = Category.objects.prefetch_related('products').all()
     serializer_class = CategoryDetailSerializer
     lookup_field = 'slug'

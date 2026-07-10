@@ -23,7 +23,7 @@ class CheckoutView(APIView):
     @transaction.atomic
     def post(self, request):
         cart = get_object_or_404(Cart, user=request.user)
-        cart_items = cart.cartitems.all()
+        cart_items = cart.cartitems.select_related('product').all()
 
         if not cart_items.exists():
             return Response(
@@ -31,33 +31,37 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        order = Order.objects.create(
-            user=request.user,
-            total_price = 0
-        )
         total_price = 0
+        order_items = []
 
         for item in cart_items:
-
-            #checking the stock---
+            # checking the stock ---
             if item.product.stock < item.quantity:
                 return Response(
                     {
-                        'message':f'{item.product.name} is out of stock'
+                        'message': f'{item.product.name} is out of stock'
                     },
-                    status= status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price
-            )
             total_price += item.product.price * item.quantity
+            order_items.append(
+                OrderItem(
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.price,
+                )
+            )
 
-        order.total_price = total_price
-        order.save()
+        order = Order.objects.create(
+            user=request.user,
+            total_price=total_price,
+        )
+
+        for order_item in order_items:
+            order_item.order = order
+
+        OrderItem.objects.bulk_create(order_items)
 
         provider = request.data.get('provider', 'stripe')
         if not provider:
@@ -89,7 +93,7 @@ class MyOrdersView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by("-created_at")
+        return Order.objects.filter(user=self.request.user).order_by("-created_at").prefetch_related('orderitems__product')
     
 
 class OrderDetailView(RetrieveAPIView):
@@ -98,7 +102,7 @@ class OrderDetailView(RetrieveAPIView):
     lookup_field = "id"
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user).prefetch_related('orderitems__product')
     
 
 class CancelOrderView(APIView):

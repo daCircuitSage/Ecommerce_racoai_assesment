@@ -14,7 +14,7 @@ class Cart(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username}'s Cart"
+        return f"{self.user.name}'s Cart"
     
 
 class CartItems(models.Model):
@@ -23,5 +23,5 @@ class CartItems(models.Model):
     quantity = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} ({self.cart.user.username})"
+        return f"{self.quantity} x {self.product.name} ({self.cart.user.name})"
     

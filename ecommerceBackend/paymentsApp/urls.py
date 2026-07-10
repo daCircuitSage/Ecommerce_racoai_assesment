@@ -1,7 +1,8 @@
-from django.urls import path
+﻿from django.urls import path
 from .views import (
     PaymentSuccessView,
     PaymentCancelView,
+    StripeWebhookView,
 )
 
 urlpatterns = [
@@ -14,5 +15,10 @@ urlpatterns = [
         "payments/cancel/",
         PaymentCancelView.as_view(),
         name="payment_cancel",
+    ),
+    path(
+        "payments/webhook/",
+        StripeWebhookView.as_view(),
+        name="stripe_webhook",
     ),
 ]

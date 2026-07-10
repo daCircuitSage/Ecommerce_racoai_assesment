@@ -1,10 +1,62 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
 
-class CustomUser(AbstractUser):
-    email = models.EmailField(unique=True)
-    profile_picture_url = models.URLField(blank=True, null=True)
+#custom_user_manager:
+class UserManager(BaseUserManager):
+    def create_user(self, email, name, password=None, password2=None):
+
+        if not email:
+            raise ValueError('users must have an email address')
+        
+        user = self.model(email=self.normalize_email(email), name=name)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+    
+
+    def create_superuser(self, email, name, password=None):
+
+        user = self.create_user(email=email, password=password, name=name)
+        user.is_admin = True
+        user.save(using=self._db)
+        return user
+    
+
+
+
+#custom user mdoel:
+
+class CustomUser(AbstractBaseUser):
+    email = models.EmailField(verbose_name='email', max_length=255, unique=True)
+    name = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('name',)
+
 
     def __str__(self):
         return self.email
+    
+    def has_perm(self, perm, obj=None):
+        "Does the user have a specific permission?"
+        return self.is_admin
+    
+    def has_module_perms(self, app_label):
+        "Does the user have permission to view the app?"
+        return True
+
+    @property
+    def is_staff(self):
+        "Is the user a member of staff?"
+        return self.is_admin
+
+
+# Backwards-compatible alias used by serializers/views that import `User`
+User = CustomUser

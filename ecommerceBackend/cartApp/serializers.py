@@ -1,3 +1,4 @@
+from django.db.models import F, Sum, DecimalField
 from rest_framework import serializers
 from .models import Cart, CartItems
 from productsApp.serializers import ProductListSerializer
@@ -31,9 +32,13 @@ class CartSerializer(serializers.ModelSerializer):
         ]
 
     def get_cart_total(self, cart):
-        items = cart.cartitems.all()
-        total = sum([item.quantity * item.product.price for item in items])
-        return total
+        total = cart.cartitems.select_related('product').aggregate(
+            total=Sum(
+                F('quantity') * F('product__price'),
+                output_field=DecimalField(max_digits=20, decimal_places=2),
+            )
+        )['total']
+        return total or 0
     
 
 class CartQuantitySerizlizer(serializers.ModelSerializer):
@@ -47,6 +52,5 @@ class CartQuantitySerizlizer(serializers.ModelSerializer):
         ]
     
     def get_total_quantity(self, cart):
-        items = cart.cartitems.all()
-        total = sum([item.quantity for item in items])
-        return total
+        total = cart.cartitems.aggregate(total=Sum('quantity'))['total']
+        return total or 0

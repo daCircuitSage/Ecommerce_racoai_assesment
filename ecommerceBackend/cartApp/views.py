@@ -21,7 +21,7 @@ class AddToCart(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         product_id = request.data.get('product_id')
-        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart, created = Cart.objects.prefetch_related('cartitems__product').get_or_create(user=request.user)
         product = get_object_or_404(Product, id=product_id)
         cartitem, created = CartItems.objects.get_or_create(
             cart=cart,
@@ -44,11 +44,11 @@ class UpdateItemQuantity(APIView):
         cartitem_id = request.data.get('item_id')
         quantity = int(request.data.get('quantity'))
 
-        cart_item = get_object_or_404(CartItems, id=cartitem_id, cart__user=request.user)
+        cart_item = get_object_or_404(CartItems.objects.select_related('product'), id=cartitem_id, cart__user=request.user)
         if quantity < 1:
             return Response(
-                {'detail':'quantity must be at least 1'},
-                status= status.HTTP_400_BAD_REQUEST
+                {'detail': 'quantity must be at least 1'},
+                status=status.HTTP_400_BAD_REQUEST
             )
         cart_item.quantity = quantity
         cart_item.save()
