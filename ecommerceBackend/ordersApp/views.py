@@ -14,6 +14,9 @@ from cartApp.models import Cart
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderItemSerializer
 
+#payment factory
+from paymentsApp.services import payment_factory
+
 
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,6 +38,16 @@ class CheckoutView(APIView):
         total_price = 0
 
         for item in cart_items:
+
+            #checking the stock---
+            if item.product.stock < item.quantity:
+                return Response(
+                    {
+                        'message':f'{item.product.name} is out of stock'
+                    },
+                    status= status.HTTP_400_BAD_REQUEST
+                )
+
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
@@ -46,18 +59,30 @@ class CheckoutView(APIView):
         order.total_price = total_price
         order.save()
 
-        cart_items.delete()
-
-        serializer = OrderSerializer(order)
+        provider = request.data.get('provider', 'stripe')
+        if not provider:
+            return Response(
+                {'message':'payment provider is required!'},
+                status= status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            strategy = payment_factory.PaymentFactory.get_payment_strategy(provider)
+        except ValueError as e:
+            return Response(
+                {'message':str(e)},
+                status= status.HTTP_400_BAD_REQUEST
+            )
+        
+        payment_data = strategy.create_payment(order)
 
         return Response(
             {
-                'message':"order placed successfully",
-                'data':serializer.data
+                'message':'proceed to payment',
+                'order':OrderSerializer(order).data,
+                'checkout_url':payment_data['checkout_url'],
             },
-            status= status.HTTP_201_CREATED
+            status=status.HTTP_200_OK
         )
-    
 
 class MyOrdersView(ListAPIView):
     serializer_class = OrderSerializer

@@ -20,7 +20,9 @@ urlpatterns = [
     #cart and cartitem
     path('', include('cartApp.urls')),
     #orders
-    path('', include('ordersApp.urls'))
+    path('', include('ordersApp.urls')),
+    #payment
+    path('',include('paymentsApp.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, documents_roots=settings.MEDIA_ROOT)

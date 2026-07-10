@@ -5,7 +5,9 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
+        'sku',
         'price',
+        'stock',
         'featured'
     )
 admin.site.register(Product, ProductAdmin)
