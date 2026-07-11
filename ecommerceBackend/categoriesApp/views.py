@@ -39,9 +39,4 @@ class CategoryProductsView(ListAPIView):
     def get_queryset(self):
         slug = self.kwargs.get('slug')
         category = get_object_or_404(Category, slug=slug)
-
-        cats = Category.objects.values_list('id', 'parent_id')
-        desc = category_descendants(cats, category.id)
-        ids = list(desc) + [category.id]
-
-        return Product.objects.filter(category_id__in=ids).select_related('category')
+        return Product.objects.filter(category=category).select_related('category')
