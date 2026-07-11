@@ -1,8 +1,11 @@
-.venv/
 __pycache__/
 *.pyc
-db.sqlite3
+*.pyo
+*.pyd
+*.db
+*.sqlite3
 .env
+.venv/
 media/
 staticfiles/
-db.qulite3.bak
+.git/
