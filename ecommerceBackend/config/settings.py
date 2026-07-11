@@ -31,7 +31,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-replace-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+NGROK_HOST = os.getenv('NGROK_HOST', '').strip()
+default_hosts = '127.0.0.1,localhost,.ngrok-free.dev'
+if NGROK_HOST:
+    default_hosts = f"{default_hosts},{NGROK_HOST}"
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default_hosts).split(',')
 
 
 # Application definition
@@ -235,6 +240,15 @@ EMAIL_FROM = os.environ.get('EMAIL_FROM')
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+]
+
+NGROK_HOST = os.getenv('NGROK_HOST', '').strip()
+if NGROK_HOST:
+    CORS_ALLOWED_ORIGINS.append(f"https://{NGROK_HOST}")
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.ngrok-free\.dev$",
+    r"^https://.*\.ngrok\.io$",
 ]
 
 
